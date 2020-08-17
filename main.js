@@ -2,6 +2,7 @@ const dotenv = require("dotenv");
 const Discord = require("discord.js");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
+const { debug } = require("console");
 
 dotenv.config();
 
@@ -32,27 +33,38 @@ client.on("message", async (message) => {
       if (message.member.voice.channel) {
         // Join the voice channel the member is currently in
         const connection = await message.member.voice.channel.join();
-        connection.on("speaking", (user, speaking) => {
-          console.log("here");
+        const receiver = connection.receiver;
+
+        // Need to play sound on join in order for bot to detect 'speaking' events
+        const dispatcher = connection.play("fire_bow_sound-mike-koenig.mp3");
+        dispatcher.on("start", () => {
+          console.log("Scribe: Play Starting...");
         });
-        connection.on("debug", (debug) => {
-          console.log("debug: ", debug);
+        dispatcher.on("finish", () => {
+          console.log("Scribe: Finished playing!");
         });
+        dispatcher.on("end", (end) => {
+          console.log("Scribe: End Finished playing!");
+        });
+
         connection.on("error", (err) => {
-          console.log("error: ", err);
+          console.log("Voice Error: ", err);
         });
 
         connection.on("speaking", (user, speaking) => {
-          console.log("here");
-          //   // Create a ReadableStream of s16le PCM audio (encoded Opus packets)
-          //   const receiver = connection.receiver.createStream(user, {
-          //     mode: "pcm",
-          //   });
-          //   receiver.pipe(fs.createWriteStream("user_audio"));
+          console.log(`${user.username} is speaking!`);
 
-          if (speaking) {
-            user.send("I am listening to you!");
-          }
+          // This creates a 16-bit signed PCM, stereo 48KHz PCM stream
+          const audioStream = receiver.createStream(user, { mode: "pcm" });
+
+          // TODO: need to set this outputStream to an external API so I can decode and capture the data I want then send it back
+          const outputStream = fs.createWriteStream("audio_file.txt");
+
+          audioStream.pipe(outputStream);
+
+          audioStream.on("end", () => {
+            console.log(`Scribe: stopped listening to ${user.username}`);
+          });
         });
       } else {
         message.reply("You need to join a voice channel first!");
