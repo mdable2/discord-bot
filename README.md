@@ -18,3 +18,5 @@ Links for creating a "Detect Tilt" feature:
 
 Overall idea --> discord.js server gets pcm voice stream, connection to flask hosted websocket server via socketio to send this byte stream to server which analyzes voice data with pyaudio, voice data sent back to discord.js server so "Tilt Checker" can be utilized AND voice data from server is sent to another python connection that receives the data and displays it graphically via numpy and matplotlib.
 - https://www.fullstackpython.com/websockets.html
+
+I think I should use socketio-stream https://github.com/nkzawa/socket.io-stream for the discord.js server to act as a "client" and stream voice data to the listening python server.
